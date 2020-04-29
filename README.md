@@ -7,3 +7,10 @@
 
 ## Database Connection
 - Mysql Datbase (connection detail in email)
+
+## Run localhost
+- open terminal
+- run command
+```bash
+node server.js
+```
