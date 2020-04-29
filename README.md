@@ -1,9 +1,9 @@
 # test mini bloh
 
 ## Install Module
-- install express [link](https://expressjs.com)
-- JWT [link][https://jwt.io]
-- mysql
+- expressjs [link](https://expressjs.com)
+- JWT [link](https://jwt.io)
+- mysql [link](https://www.npmjs.com/package/mysql)
 
 ## Database Connection
 - Mysql Datbase (connection detail in email)
