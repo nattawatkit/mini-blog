@@ -1,15 +1,17 @@
 var express = require('express')
 var jwt = require('jsonwebtoken');
-var app = express()
-app.use(express.json())
+var bodyParser = require('body-parser')
 var mysql = require('mysql')
+
+var app = express()
+app.use(express.json());
 const port = 3000
 
 var connection = mysql.createConnection({
-    host: '',
-    user: '',
-    password: '',
-    database: ''
+    host: 'database-1.cjlhex7dh9lz.ap-southeast-1.rds.amazonaws.com',
+    user: 'admin',
+    password: 'admin1234',
+    database: 'test_sertis'
 })
 connection.connect()
 
@@ -24,45 +26,61 @@ function random_string(length) {
     return result;
 }
 
+app.post('/post-test', (req, res) => {
+    console.log('Got body:', req.body);
+    res.sendStatus(200);
+});
+
 /** Create */
-app.post('/create', function (req, res) {
+/**
+ *Test Input
+ {
+    "blog_owner":"kwan",
+    "card_name": "new card",
+    "content": "test content",
+    "category": "ads",
+    "blog_status": "active"
+}
+ */
+app.post('/create',function (req, res) {
     // gerenrate token
-    let token= jwt.sign({
-        data: 'foobar'
-    }, 'secret', { expiresIn: 60 * 60 });
 
     let data = {
         id: random_string(10),
-        blog_owner: req.body.author,
+        blog_owner: req.body.blog_owner,
         card_name: req.body.card_name,
         content: req.body.card_name,
         category: req.body.category,
         blog_status: req.body.blog_status
     }
-    connection.query(`INSERT INTO mini_blog VALUES (${id},${blog_owner},${card_name},${content},${category},${blog_status}) `, function (err, rows, fields) {
-        if (err) throw err
+
+
+    connection.query(`INSERT INTO mini_blog VALUES ('${data.id}','${data.blog_owner}','${data.card_name}','${data.content}','${data.category}','${data.blog_status}');`, function (err, rows, fields) {
+        if (err) {
+            res.status(500).jsonp({ error: 'message' })
+        }
         console.log(rows)
-        res.send('get: '+req.params.author)
-        connection.end()
+        let response = {
+            
+            data: "creste success"
+        }
+        res.jsonp(response)
     })
 })
 
  /** Get */
-app.get('/update/:card_name', function (req, res) {
-
-    // verify token
-    // try {
-    //     let verify=jwt.verify(token, 'dddd')
-    // } catch(err) {
-    //     console.log(err)
-    // }
-    // response { data: 'foobar', iat: 1588164395, exp: 1588167995 }
-
-    connection.query(`select * from mini_blog where card_name=${req.params.card_name}`, function (err, rows, fields) {
-        if (err) throw err
+app.get('/:card_name', function (req, res) {
+    console.log(req.params.card_name)
+    connection.query(`select * from mini_blog where card_name='${req.params.card_name}';`, function (err, rows, fields) {
+        if (err) {
+            res.status(500).jsonp({ error: 'message' })
+        }
         console.log(rows)
-        connection.end()
-        res.send('get '+req.params.card_name)
+        let response = {
+            token: "",
+            data: "success"
+        }
+        res.jsonp(response)
     })
 
 })
@@ -97,7 +115,7 @@ app.post('/update/:author', function (req, res) {
     })
 
 })
-app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`))
+app.listen(port)
 
 
 
