@@ -26,11 +26,6 @@ function random_string(length) {
     return result;
 }
 
-app.post('/post-test', (req, res) => {
-    console.log('Got body:', req.body);
-    res.sendStatus(200);
-});
-
 /** Create */
 /**
  *Test Input
@@ -45,23 +40,23 @@ app.post('/post-test', (req, res) => {
 app.post('/create',function (req, res) {
     // gerenrate token
 
-    let data = {
-        id: random_string(10),
-        blog_owner: req.body.blog_owner,
-        card_name: req.body.card_name,
-        content: req.body.card_name,
-        category: req.body.category,
-        blog_status: req.body.blog_status
-    }
+    let data = [
+        random_string(10),
+        req.body.blog_owner,
+        req.body.card_name,
+        req.body.card_name,
+        req.body.category,
+        req.body.blog_status
+    ]
 
 
-    connection.query(`INSERT INTO mini_blog VALUES ('${data.id}','${data.blog_owner}','${data.card_name}','${data.content}','${data.category}','${data.blog_status}');`, function (err, rows, fields) {
+    connection.query(`INSERT INTO mini_blog VALUES (?, ?, ? ,? ,? ,?);`, data, function (err, rows, fields) {
         if (err) {
             res.status(500).jsonp({ error: 'message' })
         }
         console.log(rows)
         let response = {
-            
+
             data: "creste success"
         }
         res.jsonp(response)
@@ -71,14 +66,14 @@ app.post('/create',function (req, res) {
  /** Get */
 app.get('/:card_name', function (req, res) {
     console.log(req.params.card_name)
-    connection.query(`select * from mini_blog where card_name='${req.params.card_name}';`, function (err, rows, fields) {
+    connection.query(`select * from mini_blog where card_name=?;`,[req.params.card_name], function (err, rows, fields) {
         if (err) {
             res.status(500).jsonp({ error: 'message' })
         }
         console.log(rows)
         let response = {
             token: "",
-            data: "success"
+            data: rows
         }
         res.jsonp(response)
     })
@@ -87,31 +82,40 @@ app.get('/:card_name', function (req, res) {
 
 
 /** Delete new author */
-app.get('/delete/:author', function (req, res) {
+app.get('/delete/:id', function (req, res) {
 
-    connection.query(`DELETE FROM mini_blog where card_name=${req.params.card_name}`, function (err, rows, fields) {
-        if (err) throw err
+    connection.query(`DELETE FROM mini_blog where id=?;`, [req.params.id],function (err, rows, fields) {
+        if (err) {
+            res.status(500).jsonp({ error: 'message' })
+        }
         console.log(rows)
-        connection.end()
-        res.send('delete')
+
+        let response = {
+            token: "",
+            data: "delete success"
+        }
+        res.jsonp(response)
     })
 })
 
 // /** Update new author */
-app.post('/update/:author', function (req, res) {
-    let data = {
-        id: random_string(10),
-        blog_owner: req.body.author,
-        card_name: req.body.card_name,
-        content: req.body.card_name,
-        category: req.body.category,
-        blog_status: req.body.blog_status
-    }
-    connection.query(`UPDATE mini_blog SET  blog_owner=${blog_owner},card_name=${card_name},content=${content},category=${category},blog_status=${blog_status}) WHERE id=${id} `, function (err, rows, fields) {
+app.post('/update/', function (req, res) {
+    let data = [
+        req.body.blog_owner,
+        req.body.card_name,
+        req.body.content,
+        req.body.category,
+        req.body.blog_status,
+        req.body.id,
+    ]
+    // console.log(data)
+
+    console.log(`UPDATE mini_blog SET blog_owner=':blog_owner', card_name=':card_name', content=':content', category=':category', blog_status=':blog_status' WHERE id=':id'; `)
+
+    connection.query(`UPDATE mini_blog SET blog_owner=?, card_name=?, content=?, category=?, blog_status=? WHERE id=?; `, data, function (err, rows, fields) {
         if (err) throw err
         console.log(rows)
-        res.send('update: '+req.params.author)
-        connection.end()
+        res.send('update success')
     })
 
 })
