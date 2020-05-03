@@ -2,11 +2,10 @@ var express = require('express')
 var jwt = require('jsonwebtoken');
 var bodyParser = require('body-parser')
 var mysql = require('mysql')
-
 var app = express()
 app.use(express.json());
 const port = 3000
-
+const secret='secret'
 var connection = mysql.createConnection({
     host: 'database-1.cjlhex7dh9lz.ap-southeast-1.rds.amazonaws.com',
     user: 'admin',
@@ -25,18 +24,56 @@ function random_string(length) {
     }
     return result;
 }
-
-/** Create */
-/**
- *Test Input
- {
-    "blog_owner":"kwan",
-    "card_name": "new card",
-    "content": "test content",
-    "category": "ads",
-    "blog_status": "active"
+function create_token(username, secret){
+    // token exprie date 1 day
+    var token = jwt.sign({ username: username }, secret, { expiresIn:  60 * 60 * 24 });
+    return token
 }
- */
+function verify_token(token, secret){
+    var decoded = jwt.verify(token, secret)
+    return decoded
+}
+function check_user_token(token, decoded){
+    return new Promise( function(resolve, reject){
+
+        connection.query(`select * from blog_user where username=?;`,[decoded.username], function (err, rows, fields) {
+            if (err) {
+                res.status(500).jsonp({ error: 'message' })
+                resolve(false)
+            }
+            if(rows.length>0){
+                // compare request token and user token
+                if(rows[0].token==token){
+                    resolve(true)
+                }else{
+                    resolve(false)
+                }
+            }
+        })
+    }).then( function(result) {
+        return result
+    })
+}
+
+app.post('/new_author',function (req, res) {
+    let data = [
+        random_string(10),
+        req.body.username,
+        random_string(10),
+    ]
+
+    connection.query(`INSERT INTO blog_user VALUES (?, ?, ? );`, data, function (err, rows, fields) {
+        if (err) {
+            res.status(500).jsonp({ error: 'message' })
+        }
+        console.log(rows)
+        let response = {
+            data: "creste success"
+        }
+        res.jsonp(response)
+    })
+})
+/** Create */
 app.post('/create',function (req, res) {
     // gerenrate token
 
@@ -48,36 +85,60 @@ app.post('/create',function (req, res) {
         req.body.category,
         req.body.blog_status
     ]
+    token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im5hdHRhd2F0a2l0In0.mn_zJDSStaHVJzKDrXyOCeMTUha9pE-5Gc9rgKP77J4'
 
+    try {
+        var decoded = jwt.verify(token, 'secret');
+        console.log(decoded)
+    } catch(err) {
+    // err
+        console.log(err)
+    }
+    res.send("d")
 
-    connection.query(`INSERT INTO mini_blog VALUES (?, ?, ? ,? ,? ,?);`, data, function (err, rows, fields) {
-        if (err) {
-            res.status(500).jsonp({ error: 'message' })
-        }
-        console.log(rows)
-        let response = {
+    // connection.query(`INSERT INTO mini_blog VALUES (?, ?, ? ,? ,? ,?);`, data, function (err, rows, fields) {
+    //     if (err) {
+    //         res.status(500).jsonp({ error: 'message' })
+    //     }
+    //     console.log(rows)
+    //     let response = {
 
-            data: "creste success"
-        }
-        res.jsonp(response)
-    })
+    //         data: "creste success"
+    //     }
+    //     res.jsonp(response)
+    // })
 })
 
  /** Get */
 app.get('/:card_name', function (req, res) {
     console.log(req.params.card_name)
-    connection.query(`select * from mini_blog where card_name=?;`,[req.params.card_name], function (err, rows, fields) {
-        if (err) {
-            res.status(500).jsonp({ error: 'message' })
-        }
-        console.log(rows)
-        let response = {
-            token: "",
-            data: rows
-        }
-        res.jsonp(response)
-    })
+    let token = req.headers.authorization
 
+    try{
+        // verify token
+        var decoded =  verify_token(token, secret)
+        // check request token with  user token in db
+        check_user_token(token, decoded).then(result=>{
+            if(!result){
+                // token unmatch or user not foudn in db
+                res.status(500).jsonp({ error: 'username not found' })
+            }else{
+                connection.query(`select * from mini_blog where card_name=?;`,[req.params.card_name], function (err, rows, fields) {
+                    if (err) {
+                        res.status(500).jsonp({ error: 'message' })
+                    }
+                    let response = {
+                        token: "",
+                        data: ""
+                    }
+                    response.data= rows
+                    res.jsonp(response)
+                })
+            }
+        })
+    }catch(err){
+        res.status(500).jsonp({ error: 'invalid token' })
+    }
 })
 
 
