@@ -11,22 +11,22 @@ var connection = mysql.createConnection({
 connection.connect()
 
 
-// let token=create_token('nattawatkit', 'secret')
-// console.log(token)
+let token=create_token('nattawatkit', 'secret')
+console.log(token)
 
-var token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im5hdHRhd2F0a2l0IiwiaWF0IjoxNTg4NDk1ODUxLCJleHAiOjE1ODg1ODIyNTF9.19tpGelgf_LkE6ns4AbknKRD52IwHQkszgJhLANxIg0'
-try{
-    var decoded =  verify_token(token, secret)
-    check_user_token(decoded).then(result=>{
-        console.log(result)
-    })
+// var token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im5hdHRhd2F0a2l0IiwiaWF0IjoxNTg4NDk1ODUxLCJleHAiOjE1ODg1ODIyNTF9.19tpGelgf_LkE6ns4AbknKRD52IwHQkszgJhLANxIg0'
+// try{
+//     var decoded =  verify_token(token, secret)
+//     check_user_token(decoded).then(result=>{
+//         console.log(result)
+//     })
 
-}catch(err){
-    console.log(err.name)
-    console.log(err.message)
-    console.log(err.expiredAt)
-    return false
-}
+// }catch(err){
+//     console.log(err.name)
+//     console.log(err.message)
+//     console.log(err.expiredAt)
+//     return false
+// }
 
 // verify check token expire date
 // query username for database to compare token

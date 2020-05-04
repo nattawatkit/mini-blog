@@ -73,47 +73,50 @@ app.post('/new_author',function (req, res) {
         res.jsonp(response)
     })
 })
+
 /** Create */
 app.post('/create',function (req, res) {
-    // gerenrate token
+    try{
+        // verify token
+        let token = req.headers.authorization
+        var decoded =  verify_token(token, secret)
+        // check request token with  user token in db
+        check_user_token(token, decoded).then(result=>{
+            if(!result){
+                // token unmatch or user not foudn in db
+                res.status(500).jsonp({ error: 'username not found' })
+            }else{
+                let data = [
+                    random_string(10),
+                    req.body.blog_owner,
+                    req.body.card_name,
+                    req.body.card_name,
+                    req.body.category,
+                    req.body.blog_status
+                ]
+                console.log(data)
+                connection.query(`INSERT INTO mini_blog VALUES (?, ?, ? ,? ,? ,?);`, data, function (err, rows, fields) {
+                    if (err) {
+                        res.status(500).jsonp({ error: 'message' })
+                    }
+                    console.log(rows)
+                    let response = {
 
-    let data = [
-        random_string(10),
-        req.body.blog_owner,
-        req.body.card_name,
-        req.body.card_name,
-        req.body.category,
-        req.body.blog_status
-    ]
-    token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im5hdHRhd2F0a2l0In0.mn_zJDSStaHVJzKDrXyOCeMTUha9pE-5Gc9rgKP77J4'
-
-    try {
-        var decoded = jwt.verify(token, 'secret');
-        console.log(decoded)
-    } catch(err) {
-    // err
-        console.log(err)
+                        data: "creste success"
+                    }
+                    res.jsonp(response)
+                })
+            }
+        })
+    }catch(err){
+        res.status(500).jsonp({ error: 'invalid token' })
     }
-    res.send("d")
-
-    // connection.query(`INSERT INTO mini_blog VALUES (?, ?, ? ,? ,? ,?);`, data, function (err, rows, fields) {
-    //     if (err) {
-    //         res.status(500).jsonp({ error: 'message' })
-    //     }
-    //     console.log(rows)
-    //     let response = {
-
-    //         data: "creste success"
-    //     }
-    //     res.jsonp(response)
-    // })
 })
 
  /** Get */
 app.get('/:card_name', function (req, res) {
     console.log(req.params.card_name)
     let token = req.headers.authorization
-
     try{
         // verify token
         var decoded =  verify_token(token, secret)
@@ -144,40 +147,76 @@ app.get('/:card_name', function (req, res) {
 
 /** Delete new author */
 app.get('/delete/:id', function (req, res) {
+    try{
+        // verify token
+        let token = req.headers.authorization
+        var decoded =  verify_token(token, secret)
+        // check request token with  user token in db
+        check_user_token(token, decoded).then(result=>{
+            if(!result){
+                // token unmatch or user not foudn in db
+                res.status(500).jsonp({ error: 'username not found' })
+            }else{
+                connection.query(`DELETE FROM mini_blog where id=?;`, [req.params.id],function (err, rows, fields) {
+                    if (err) {
+                        res.status(500).jsonp({ error: 'message' })
+                    }
+                    console.log(rows)
 
-    connection.query(`DELETE FROM mini_blog where id=?;`, [req.params.id],function (err, rows, fields) {
-        if (err) {
-            res.status(500).jsonp({ error: 'message' })
-        }
-        console.log(rows)
-
-        let response = {
-            token: "",
-            data: "delete success"
-        }
-        res.jsonp(response)
-    })
+                    let response = {
+                        token: "",
+                        data: "delete success"
+                    }
+                    res.jsonp(response)
+                })
+            }
+        })
+    }catch(err){
+        res.status(500).jsonp({ error: 'invalid token' })
+    }
 })
 
 // /** Update new author */
 app.post('/update/', function (req, res) {
-    let data = [
-        req.body.blog_owner,
-        req.body.card_name,
-        req.body.content,
-        req.body.category,
-        req.body.blog_status,
-        req.body.id,
-    ]
-    // console.log(data)
-
-    console.log(`UPDATE mini_blog SET blog_owner=':blog_owner', card_name=':card_name', content=':content', category=':category', blog_status=':blog_status' WHERE id=':id'; `)
-
-    connection.query(`UPDATE mini_blog SET blog_owner=?, card_name=?, content=?, category=?, blog_status=? WHERE id=?; `, data, function (err, rows, fields) {
-        if (err) throw err
-        console.log(rows)
-        res.send('update success')
-    })
+    try{
+        // verify token
+        let token = req.headers.authorization
+        var decoded =  verify_token(token, secret)
+        // check request token with  user token in db
+        check_user_token(token, decoded).then(result=>{
+            if(!result){
+                // token unmatch or user not foudn in db
+                res.status(500).jsonp({ error: 'username not found' })
+            }else{
+                let data = [
+                    req.body.blog_owner,
+                    req.body.card_name,
+                    req.body.content,
+                    req.body.category,
+                    req.body.blog_status,
+                    req.body.id,
+                ]
+                connection.query(`UPDATE mini_blog SET blog_owner=?, card_name=?, content=?, category=?, blog_status=? WHERE id=?; `, data, function (err, rows, fields) {
+                    if (err) {
+                        res.status(500).jsonp({ error: 'message' })
+                    }
+                    console.log(rows)
+                    let response = {
+                        data: ""
+                    }
+                    if(rows.affectedRows==0){
+                        response.data="update not found"
+                        res.jsonp(response)
+                    }else{
+                        response.data="update success"
+                        res.jsonp(response)
+                    }
+                })
+            }
+        })
+    }catch(err){
+        res.status(500).jsonp({ error: 'invalid token' })
+    }
 
 })
 app.listen(port)
