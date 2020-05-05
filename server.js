@@ -100,25 +100,22 @@ app.post('/create',function (req, res) {
                 // token unmatch or user not foudn in db
                 res.status(500).jsonp({ error: 'username not found' })
             }else{
-                let data = [
-                    random_string(10),
-                    req.body.blog_owner,
-                    req.body.card_name,
-                    req.body.card_name,
-                    req.body.category,
-                    req.body.blog_status
-                ]
+                let data = {
+                    id: random_string(10),
+                    blog_owner: req.body.blog_owner,
+                    card_name: req.body.card_name,
+                    content: req.body.content,
+                    category: req.body.category,
+                    blog_status: req.body.blog_status
+                }
                 console.log(data)
-                connection.query(`INSERT INTO mini_blog VALUES (?, ?, ? ,? ,? ,?);`, data, function (err, rows, fields) {
-                    if (err) {
-                        res.status(500).jsonp({ error: 'message' })
+                 Model.MiniBlog.create({ id: data.id, blog_owner: data.blog_owner,  card_name: data.card_name, content: data.content, category: data.category, blog_status: data.blog_status }).then(result=>{
+                    if (result instanceof Model.MiniBlog){
+                        let response = {
+                            data: "creste success"
+                        }
+                        res.jsonp(response)
                     }
-                    console.log(rows)
-                    let response = {
-
-                        data: "creste success"
-                    }
-                    res.jsonp(response)
                 })
             }
         })
@@ -134,14 +131,15 @@ app.get('/:card_name', function (req, res) {
     try{
         // verify token
         var decoded =  verify_token(token, secret)
-        // check request token with  user token in db
 
+        // check request token with  user token in db=
         check_user_token(token, decoded).then(result=>{
             if(!result){
                 // token unmatch or user not foudn in db
                 res.status(500).jsonp({ error: 'username not found' })
             }else{
                 Model.MiniBlog.findOne({ where: {card_name: req.params.card_name}, raw: true }).then(project => {
+                    // card not found
                     if(!project){
                         res.status(500).jsonp({ error: req.params.card_name+' not found' })
                     }
