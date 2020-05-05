@@ -2,17 +2,24 @@ var express = require('express')
 var jwt = require('jsonwebtoken');
 var bodyParser = require('body-parser')
 var mysql = require('mysql')
+const Sequelize = require('sequelize');
+
 var app = express()
 app.use(express.json());
 const port = 3000
 const secret='secret'
-var connection = mysql.createConnection({
+// var connection = mysql.createConnection({
+//     host: 'database-1.cjlhex7dh9lz.ap-southeast-1.rds.amazonaws.com',
+//     user: 'admin',
+//     password: 'admin1234',
+//     database: 'test_sertis'
+// })
+// connection.connect()
+
+const sequelize = new Sequelize('test_sertis', 'admin', 'admin1234', {
     host: 'database-1.cjlhex7dh9lz.ap-southeast-1.rds.amazonaws.com',
-    user: 'admin',
-    password: 'admin1234',
-    database: 'test_sertis'
-})
-connection.connect()
+    dialect:'mysql'
+});
 
 
 function random_string(length) {
@@ -54,6 +61,16 @@ function check_user_token(token, decoded){
         return result
     })
 }
+
+app.post('/new_author',function (req, res) {
+
+    sequelize.authenticate().then(() => {
+        console.log('Connection has been established successfully.');
+    }).catch(err => {
+        console.error('Unable to connect to the database:', err);
+    });
+
+})
 
 app.post('/new_author',function (req, res) {
     let data = [
