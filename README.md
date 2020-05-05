@@ -1,16 +1,27 @@
 # test mini bloh
 
 ## Install Module
-- expressjs [link](https://expressjs.com)
+- Expressjs [link](https://expressjs.com)
 - JWT [link](https://jwt.io)
-- mysql [link](https://www.npmjs.com/package/mysql)
+- Sequelize(Node.js ORM MySQL) [link](https://sequelize.org/master/)
 
 ## Database Connection
-- Mysql Datbase (connection detail in email)
+- Mysql Datbase (connection detail in email) - edit connnection in model.js
 
-## Run localhost
+## Start API localhost
 - open terminal
 - run command
 ```bash
 node server.js
 ```
+
+## API
+|Path | Method|Headers|Description|
+|--|--|--|--|
+|/refresh_token|POST|-|generate new token|
+|/new_user|POST|-|create new user|
+|/create|POST|Authorization: \<token\>|create new blog|
+|/:card_name|GET|Authorization: \<token\>|get blog|
+|/delete/:id|GET|Authorization: \<token\>|delete blog|
+|/update|POST|Authorization: \<token\>|update blog|
+
