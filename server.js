@@ -3,7 +3,7 @@ var jwt = require('jsonwebtoken');
 var bodyParser = require('body-parser')
 var mysql = require('mysql')
 const Sequelize = require('sequelize');
-
+var Model=require('./model')
 var app = express()
 app.use(express.json());
 const port = 3000
@@ -15,11 +15,6 @@ const secret='secret'
 //     database: 'test_sertis'
 // })
 // connection.connect()
-
-const sequelize = new Sequelize('test_sertis', 'admin', 'admin1234', {
-    host: 'database-1.cjlhex7dh9lz.ap-southeast-1.rds.amazonaws.com',
-    dialect:'mysql'
-});
 
 
 function random_string(length) {
@@ -37,39 +32,42 @@ function create_token(username, secret){
     return token
 }
 function verify_token(token, secret){
+    console.log(token)
     var decoded = jwt.verify(token, secret)
+    console.log(decoded)
     return decoded
 }
 function check_user_token(token, decoded){
-    return new Promise( function(resolve, reject){
 
-        connection.query(`select * from blog_user where username=?;`,[decoded.username], function (err, rows, fields) {
-            if (err) {
-                res.status(500).jsonp({ error: 'message' })
+    return new Promise( function(resolve, reject){
+        Model.BlogUser.findOne({ where: {username:decoded.username }}).then(project => {
+            // username notfound
+            if(!project){
                 resolve(false)
-            }
-            if(rows.length>0){
-                // compare request token and user token
-                if(rows[0].token==token){
+            }else{
+                if(project.get('token')==token){
                     resolve(true)
                 }else{
                     resolve(false)
                 }
             }
         })
-    }).then( function(result) {
-        return result
     })
 }
 
-app.post('/new_author',function (req, res) {
 
-    sequelize.authenticate().then(() => {
-        console.log('Connection has been established successfully.');
-    }).catch(err => {
-        console.error('Unable to connect to the database:', err);
-    });
+app.get('/',function (req, res) {
+    Model.MiniBlog.findOne({ where: {id: 'cYqj0NBSpa'}, raw: true }).then(project => {
+        res.jsonp(project)
+    })
+})
 
+
+
+app.post('/new_token',function (req, res) {
+
+    token = create_token(req.body.username, secret)
+    res.jsonp({token: token})
 })
 
 app.post('/new_author',function (req, res) {
@@ -78,7 +76,6 @@ app.post('/new_author',function (req, res) {
         req.body.username,
         random_string(10),
     ]
-
     connection.query(`INSERT INTO blog_user VALUES (?, ?, ? );`, data, function (err, rows, fields) {
         if (err) {
             res.status(500).jsonp({ error: 'message' })
@@ -138,21 +135,22 @@ app.get('/:card_name', function (req, res) {
         // verify token
         var decoded =  verify_token(token, secret)
         // check request token with  user token in db
+
         check_user_token(token, decoded).then(result=>{
             if(!result){
                 // token unmatch or user not foudn in db
                 res.status(500).jsonp({ error: 'username not found' })
             }else{
-                connection.query(`select * from mini_blog where card_name=?;`,[req.params.card_name], function (err, rows, fields) {
-                    if (err) {
-                        res.status(500).jsonp({ error: 'message' })
+                Model.MiniBlog.findOne({ where: {card_name: req.params.card_name}, raw: true }).then(project => {
+                    if(!project){
+                        res.status(500).jsonp({ error: req.params.card_name+' not found' })
                     }
                     let response = {
                         token: "",
                         data: ""
                     }
-                    response.data= rows
-                    res.jsonp(response)
+                    response.data= project
+                    res.jsonp(project)
                 })
             }
         })
